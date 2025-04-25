@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="es">
+<!-- Codigo HTML -->
+<head>
+  <meta charset="UTF-8">
+  <title> Mini App Repostería </title>  
+
+  <!-- Codigo CSS -->
+  <style>
+    body {
+      margin: 0;
+      background: #fce4ec;
+      font-family: sans-serif;
+    }
+    canvas {
+      display: block;
+      margin: auto;
+      background: #fff3f3;
+      border: 3px solid #d81b60;
+    }
+  </style>
+</head>
+
+<!-- Codigo JavaScript -->
+<body>
+<script>
+  function onLoad() {  // Funcion onload: carga la página
+    const canvas = document.createElement("canvas");  // crea el canvas: Hoja para dibujar
+    canvas.width = 640;  // ancho del canvas
+    canvas.height = 480;  // alto del canvas
+    document.body.appendChild(canvas);  // Pega el canvas en la pantalla
+    const ctx = canvas.getContext("2d");  // obtiene el contexto del canvas: Da una herramienta para dibujar
+
+    const productosBase = [  // Productos originales
+      { x: 100, y: 150, color: "#ffcccb", nombre: "Cupcake" },
+      { x: 250, y: 150, color: "#ffe4b5", nombre: "Donut" },
+      { x: 400, y: 150, color: "#e6ccff", nombre: "Galleta" },
+    ];
+
+    let productos = [...productosBase.map(p => ({ ...p }))];  // Clonamos los productos originales
+    let fondo = "#fff3f3";
+    let productoEncima = null;  // Producto que está debajo del mouse
+
+    // Funcion para dibujar el canvas
+    function dibujar() {
+      ctx.fillStyle = fondo; //Le dice al lapiz que el fondo sea de rosado claro
+      ctx.fillRect(0, 0, canvas.width, canvas.height);  // Dibuja un rectangulo en el canvas
+
+      // Dibuja los productos
+      productos.forEach(p => {  //Recorre la lista de productos
+        ctx.beginPath();  // Inicia el lapiz
+        ctx.fillStyle = p.color; //El lapiz usa el color que se establece en el producto
+        ctx.arc(p.x, p.y, 50, 0, Math.PI * 2); // Dibuja un circulo
+        ctx.fill(); //Rellena el circulo con el color establecido  
+        ctx.strokeStyle = "#000"; //Cambia el borde del color del circulo a negro
+        ctx.stroke(); //Dibuja el borde del circulo 
+
+        // Si el producto está debajo del mouse, mostrar su nombre
+        if (productoEncima === p) {
+          ctx.fillStyle = "#000";
+          ctx.font = "16px sans-serif";  // Fuente del texto
+          ctx.textAlign = "center";
+          ctx.fillText(p.nombre, p.x, p.y - 60);  // Mostrar el nombre arriba del producto
+        }
+      });
+    }
+
+    // Eventos interactivos
+
+    // 1. CLICK: Muestra el nombre del producto al hacer click
+
+    canvas.addEventListener("click", function(e) {  
+      const rect = canvas.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top;
+
+      productos.forEach(p => {
+        const dx = mouseX - p.x;
+        const dy = mouseY - p.y;
+        if (dx * dx + dy * dy < 50 * 50) {
+          alert("Producto: " + p.nombre);
+        }
+      });
+    });
+
+    // 2. Mouse Move: Cambia el color del producto temporalmente y muestra nombre
+    canvas.addEventListener("mousemove", function(e) {
+      const rect = canvas.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top;
+
+      productoEncima = null;
+
+      productos.forEach(p => {
+        const dx = mouseX - p.x;
+        const dy = mouseY - p.y;
+        const encima = dx * dx + dy * dy < 50 * 50;
+        if (encima) {
+          p.color = "#ff80ab";
+          productoEncima = p;
+        } else {
+          if (p.nombre === "Cupcake") p.color = "#ffcccb";
+          else if (p.nombre === "Donut") p.color = "#ffe4b5";
+          else if (p.nombre === "Galleta") p.color = "#e6ccff";
+          else p.color = "#c5e1a5";
+        }
+      });
+
+      dibujar();
+    });
+
+    // 3. Mouse Down: Cambia el color del producto permanentemente
+    canvas.addEventListener("mousedown", function(e) {
+      const rect = canvas.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top;
+
+      productos.forEach(p => {
+        const dx = mouseX - p.x;
+        const dy = mouseY - p.y;
+        const encima = dx * dx + dy * dy < 50 * 50;
+        if (encima) {
+          p.color = "#ff80ab";
+        }
+      });
+
+      dibujar();
+    });
+
+    // 4. Presionar una tecla para cambiar el fondo
+    document.addEventListener("keydown", function(e) {
+      if (e.key === "n") {
+        fondo = "#222";  // modo noche
+      }
+      else if (e.key === "d") {
+        fondo = "#fff3f3";  // modo día
+      }
+
+      dibujar();
+    });
+
+    // 5. Doble click para agregar un nuevo producto
+    canvas.addEventListener("dblclick", function(e) {
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+
+      productos.push({
+        x,
+        y,
+        color: "#c5e1a5",
+        nombre: "Pastel"
+      });
+
+      dibujar();
+    });
+
+    // 6. Mouseover: muestra el producto debajo del mouse en consola
+    canvas.addEventListener("mouseover", function(e) {
+      console.log("Moviendo sobre el canvas...");
+    });
+
+    // 7. Mouseout: limpia la consola
+    canvas.addEventListener("mouseout", function(e) {
+      console.clear();
+      productoEncima = null;
+      dibujar();
+    });
+
+    // 8. Wheel: cambia el tamaño del canvas con la rueda del mouse
+    canvas.addEventListener("wheel", function(e) {
+      if (e.deltaY < 0) {
+        canvas.width += 20;
+        canvas.height += 20;
+      } else {
+        canvas.width = Math.max(200, canvas.width - 20);
+        canvas.height = Math.max(200, canvas.height - 20);
+      }
+      dibujar();
+    });
+
+    // 9. Keyup: al soltar la tecla "r" se reinician los productos
+    document.addEventListener("keyup", function(e) {
+      if (e.key === "r") {
+        productos = [...productosBase.map(p => ({ ...p }))];
+        productoEncima = null;
+        dibujar();
+      }
+    });
+
+    // Llamamos la función para dibujar por primera vez
+    dibujar();
+  }
+
+  // Ejecutamos onLoad cuando la página haya cargado
+  window.onload = onLoad;
+</script>
+</body>
+</html>
